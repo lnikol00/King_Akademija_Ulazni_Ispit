@@ -1,4 +1,7 @@
 
+using DEV_Test.Models;
+using DEV_Test.Services.ProductService;
+
 namespace DEV_Test
 {
     public class Program
@@ -13,6 +16,10 @@ namespace DEV_Test
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddSingleton<IProductService, ProductService>();
+
+            builder.Services.Configure<ConnectionApi>(builder.Configuration.GetSection("ConnectionApi"));
 
             var app = builder.Build();
 

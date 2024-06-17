@@ -57,7 +57,7 @@ namespace DEV_Test.Services.ProductService
                         }
                         else
                         {
-                            throw new ErrorMessage("No results to match this parameters");
+                            throw new ErrorMessage("No products to match this parameters");
                         }
 
                     }
@@ -180,6 +180,77 @@ namespace DEV_Test.Services.ProductService
                         else
                         {
                             throw new ErrorMessage("No results to match this parameters");
+                        }
+
+                    }
+                    else
+                    {
+                        throw new ErrorMessage("Invalid response context!");
+                    }
+
+                }
+                else
+                {
+                    throw new ErrorMessage("No response!");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new ErrorMessage($"An error occurred: {ex.Message}");
+            }
+
+            return request;
+        }
+
+        public async Task<List<ResultModel>> GetProductsBySearch(string search)
+        {
+            string url = _connectionApi.Value.ConnectionString;
+            if (!string.IsNullOrEmpty(url))
+            {
+                if (!string.IsNullOrEmpty(search))
+                {
+                    url += $"/products/search?q={search}";
+                }
+                else
+                {
+                    url += "/products";
+                }
+            }
+
+            HttpClient client = new HttpClient();
+            List<ResultModel> request = new List<ResultModel>();
+            try
+            {
+                var response = await client.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var reposnseContext = await response.Content.ReadAsStringAsync();
+
+                    if (!string.IsNullOrEmpty(reposnseContext))
+                    {
+                        var results = JsonSerializer.Deserialize<SearchResult>(reposnseContext);
+
+                        if (results != null && results.products.Count > 0)
+                        {
+                            var products = results.products.Select(x => new ResultModel
+                            {
+                                Id = x.id,
+                                Image = x.images[0],
+                                Title = x.title,
+                                Description = x.description,
+                                Price = x.price
+
+                            }).ToList();
+
+                            if (products != null)
+                            {
+                                request.AddRange(products);
+                            }
+                        }
+                        else
+                        {
+                            throw new ErrorMessage("No products to match this parameters");
                         }
 
                     }

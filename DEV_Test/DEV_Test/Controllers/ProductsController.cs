@@ -37,10 +37,17 @@ namespace DEV_Test.Controllers
         }
 
         [HttpGet("Filter")]
-        public async Task<ActionResult<ResultModel>> GetFilterProducts(SearchRequestDTO searchRequest)
+        public async Task<ActionResult<ResultModel>> GetFilterProducts([FromQuery] SearchRequestDTO searchRequest)
         {
             var filteredProduct = await _productService.GetFilterProducts(searchRequest);
             return Ok(filteredProduct);
+        }
+
+        [HttpGet("Search")]
+        public async Task<ActionResult<ResultModel>> GetProductsBySearch([FromQuery] string search = "")
+        {
+            var searchProducts = await _productService.GetProductsBySearch(search);
+            return Ok(searchProducts);
         }
     }
 }

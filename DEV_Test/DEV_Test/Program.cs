@@ -1,5 +1,6 @@
 
 using DEV_Test.Models;
+using DEV_Test.Services.AuthService;
 using DEV_Test.Services.ProductService;
 using DEV_Test.Services.ProductService.Models;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ namespace DEV_Test
                 options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
             builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddSingleton<IAuthService, AuthService>();
 
             builder.Services.Configure<ConnectionApi>(builder.Configuration.GetSection("ConnectionApi"));
 

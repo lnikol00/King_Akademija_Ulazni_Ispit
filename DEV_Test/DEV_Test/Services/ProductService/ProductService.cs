@@ -2,6 +2,7 @@
 using DEV_Test.Exceptions;
 using DEV_Test.Models;
 using DEV_Test.Services.ProductService.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -11,9 +12,12 @@ namespace DEV_Test.Services.ProductService
     {
         private readonly IOptions<ConnectionApi> _connectionApi;
 
-        public ProductService(IOptions<ConnectionApi> connectionApi)
+        private DatabaseContext _db;
+
+        public ProductService(IOptions<ConnectionApi> connectionApi, DatabaseContext db)
         {
             _connectionApi = connectionApi;
+            _db = db;
         }
 
         public async Task<List<ResultModel>> GetAllProducts()
@@ -138,12 +142,12 @@ namespace DEV_Test.Services.ProductService
             return request;
         }
 
-        public async Task<List<ResultModel>> GetFilterProducts(SearchRequestDTO searchRequest)
+        public async Task<List<ResultModel>> GetFilterProducts(FilterRequestDTO filterRequest)
         {
             string url = _connectionApi.Value.ConnectionString;
             if (!string.IsNullOrEmpty(url))
             {
-                url += $"/products?price={searchRequest.Price}&category={searchRequest.Category}";
+                url += $"/products?price={filterRequest.Price}&category={filterRequest.Category}";
             }
 
             HttpClient client = new HttpClient();
@@ -202,14 +206,14 @@ namespace DEV_Test.Services.ProductService
             return request;
         }
 
-        public async Task<List<ResultModel>> GetProductsBySearch(string search)
+        public async Task<List<ResultModel>> GetProductsBySearch(SearchRequestDTO searchRequest)
         {
             string url = _connectionApi.Value.ConnectionString;
             if (!string.IsNullOrEmpty(url))
             {
-                if (!string.IsNullOrEmpty(search))
+                if (!string.IsNullOrEmpty(searchRequest.search))
                 {
-                    url += $"/products/search?q={search}";
+                    url += $"/products/search?q={searchRequest.search}";
                 }
                 else
                 {
@@ -230,6 +234,30 @@ namespace DEV_Test.Services.ProductService
                     if (!string.IsNullOrEmpty(reposnseContext))
                     {
                         var results = JsonSerializer.Deserialize<SearchResult>(reposnseContext);
+
+                        var searchParams = searchRequest.ToModel();
+
+                        var existingSearch = await _db.Searches.FirstOrDefaultAsync(x =>
+                                x.Search == searchParams.Search
+                        );
+
+                        if (existingSearch == null)
+                        {
+                            _db.Add(searchParams);
+
+                            try
+                            {
+                                await _db.SaveChangesAsync();
+                            }
+                            catch
+                            {
+                                throw new ErrorMessage("An error occurred while connecting to the database.");
+                            }
+                        }
+                        else
+                        {
+                            searchParams = existingSearch;
+                        }
 
                         if (results != null && results.products.Count > 0)
                         {

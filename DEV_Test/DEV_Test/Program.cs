@@ -1,6 +1,8 @@
 
 using DEV_Test.Models;
 using DEV_Test.Services.ProductService;
+using DEV_Test.Services.ProductService.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DEV_Test
 {
@@ -17,7 +19,10 @@ namespace DEV_Test
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddSingleton<IProductService, ProductService>();
+            builder.Services.AddDbContext<DatabaseContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+            builder.Services.AddScoped<IProductService, ProductService>();
 
             builder.Services.Configure<ConnectionApi>(builder.Configuration.GetSection("ConnectionApi"));
 

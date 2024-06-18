@@ -1,9 +1,19 @@
-﻿namespace DEV_Test.Controllers.DTO
+﻿using DEV_Test.Services.ProductService.Models;
+
+namespace DEV_Test.Controllers.DTO
 {
     public class SearchRequestDTO
     {
-        public decimal Price { get; set; }
+        public string search { get; set; } = "";
 
-        public string Category { get; set; }
+        public SearchParams ToModel()
+        {
+            return new SearchParams
+            {
+                Search = search
+            };
+        }
     }
+
+
 }

@@ -47,9 +47,12 @@ namespace DEV_Test.Controllers
 
         // Endpoint vraća proizvode filtrirane ovisno o kategoriji kojoj pripadaju i cijeni.
         // Primjer zahtjeva:
-        // GET https://localhost:7197/api/Products/5
-        // Endpoint vraća detalje o proizvodu sa ID-om 5. Ukoliko proizvod sa traženim ID-om ne postoji dobit ćemo
-        // 404 odgovor Not Found, odnosno da proizvod sa traženim ID-om ne postoji
+        // GET https://localhost:7197/api/Products/Filter?order=desc&category=beauty
+        // Cijena može biti filtrirana od veće prema manjoj te od manje prema većoj (odnosno asc i desc), također neke
+        // od kategorija su beauty, furniture, groceries itd. Vrijednosti se unose preko Query-ja tako da se na frontendu
+        // korisniku mogu ponuditi mogućnosti koje on može razumjeti, a šalje točnu vrijednost.
+        // Primjerice, da korisnik odabere opciju (OD VEĆE PREMA MANJOJ) koja šalje value desc.
+        // Također rezultati filtriranja spremaju se lokalnu u bazu podataka i po ponovnoj pretrazi dohvaća se iz baze.
         [HttpGet("Filter")]
         public async Task<ActionResult<ResultModel>> GetFilterProducts([FromQuery] FilterRequestDTO filterRequest)
         {

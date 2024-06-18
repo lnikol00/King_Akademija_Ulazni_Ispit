@@ -14,6 +14,7 @@ namespace DEV_Test.Controllers
         {
             _productService = productService;
         }
+
         // Endpoint vraća listu svih proizvoda (limit dummyJSON je stavljen na 30 tako da vraća prvih 30 proizvoda u listi)
         // Primjer zahtjeva:
         // GET https://localhost:7197/api/Products
@@ -23,6 +24,7 @@ namespace DEV_Test.Controllers
             var allProducts = await _productService.GetAllProducts();
             return Ok(allProducts);
         }
+
         // Endpoint vraća detalje pojedinačnog proizvoda kojeg pretražujemo ovisno o njegovom ID-u.
         // Primjer zahtjeva:
         // GET https://localhost:7197/api/Products/5
@@ -43,6 +45,11 @@ namespace DEV_Test.Controllers
             }
         }
 
+        // Endpoint vraća proizvode filtrirane ovisno o kategoriji kojoj pripadaju i cijeni.
+        // Primjer zahtjeva:
+        // GET https://localhost:7197/api/Products/5
+        // Endpoint vraća detalje o proizvodu sa ID-om 5. Ukoliko proizvod sa traženim ID-om ne postoji dobit ćemo
+        // 404 odgovor Not Found, odnosno da proizvod sa traženim ID-om ne postoji
         [HttpGet("Filter")]
         public async Task<ActionResult<ResultModel>> GetFilterProducts([FromQuery] FilterRequestDTO filterRequest)
         {

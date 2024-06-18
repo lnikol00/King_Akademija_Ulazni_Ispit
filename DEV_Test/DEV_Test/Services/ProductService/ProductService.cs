@@ -147,9 +147,8 @@ namespace DEV_Test.Services.ProductService
             string url = _connectionApi.Value.ConnectionString;
             if (!string.IsNullOrEmpty(url))
             {
-                url += $"/products?price={filterRequest.Price}&category={filterRequest.Category}";
+                url += $"/products/category/{filterRequest.category}?sortBy=price&order={filterRequest.order}";
             }
-
             HttpClient client = new HttpClient();
             List<ResultModel> request = new List<ResultModel>();
             try
@@ -163,6 +162,31 @@ namespace DEV_Test.Services.ProductService
                     if (!string.IsNullOrEmpty(reposnseContext))
                     {
                         var results = JsonSerializer.Deserialize<SearchResult>(reposnseContext);
+
+                        var filterParams = filterRequest.ToModel();
+
+                        var existingFilter = await _db.Filters.FirstOrDefaultAsync(x =>
+                                x.Order == filterParams.Order
+                                && x.Category == filterParams.Category
+                        );
+
+                        if (existingFilter == null)
+                        {
+                            _db.Add(filterParams);
+
+                            try
+                            {
+                                await _db.SaveChangesAsync();
+                            }
+                            catch
+                            {
+                                throw new ErrorMessage("An error occurred while connecting to the database.");
+                            }
+                        }
+                        else
+                        {
+                            filterParams = existingFilter;
+                        }
 
                         if (results != null && results.products.Count > 0)
                         {

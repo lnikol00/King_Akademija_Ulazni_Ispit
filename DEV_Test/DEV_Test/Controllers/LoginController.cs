@@ -15,6 +15,11 @@ namespace DEV_Test.Controllers
             _authService = authService;
         }
 
+        // Endpoint radi login za korisnika, te ako je login uspješaj kreira AccessToken za njega i vraća osnovne podatke o korisniku
+        // Primjer zahtjeva:
+        // POST https://localhost:7197/api/Login
+        // Primjer korisnika : Username: "emilys", Password: "emilyspass"
+        // Ukoliko korisnik ne postoji, endpoint vraća Unauthorized.
         [HttpPost]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginModelDTO loginModel)
         {

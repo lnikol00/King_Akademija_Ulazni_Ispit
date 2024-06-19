@@ -2,9 +2,9 @@
 KING ICT Akademija - Ljetna praksa - Ulazni ispit (.NET)
 
 ## Sadržaj
-* [Kloniranje i pokretanje projekta] (#kloniranje-i-pokretanje-projekta)
-* [Opis endpointa] (#opis-endpointa)
-* [Konfiguracija baze podataka] (#konfiguracija-baze-podataka)
+* [Kloniranje i pokretanje projekta](#kloniranje-i-pokretanje-projekta)
+* [Opis endpointa](#opis-endpointa)
+* [Konfiguracija baze podataka](#konfiguracija-baze-podataka)
 
 ## Kloniranje i pokretanje projekta
 

@@ -7,9 +7,7 @@ namespace DEV_Test.Services.ProductService
     {
         Task<List<ResultModel>> GetAllProducts();
         Task<ResultModel> GetProductById(int id);
-
         Task<List<ResultModel>> GetFilterProducts(FilterRequestDTO filterRequest);
-
         Task<List<ResultModel>> GetProductsBySearch(SearchRequestDTO searchRequest);
     }
 }

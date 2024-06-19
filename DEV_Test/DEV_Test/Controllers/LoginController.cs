@@ -1,5 +1,6 @@
 ﻿using DEV_Test.Controllers.DTO;
 using DEV_Test.Services.AuthService;
+using DEV_Test.Services.AuthService.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DEV_Test.Controllers
@@ -15,7 +16,7 @@ namespace DEV_Test.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login([FromBody] LoginModelDTO loginModel)
+        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginModelDTO loginModel)
         {
             if (loginModel == null || string.IsNullOrEmpty(loginModel.Username) || string.IsNullOrEmpty(loginModel.Password))
             {
@@ -24,8 +25,8 @@ namespace DEV_Test.Controllers
 
             try
             {
-                var token = await _authService.LoginAsync(loginModel);
-                return Ok(token);
+                var user = await _authService.LoginAsync(loginModel);
+                return Ok(user);
             }
             catch (UnauthorizedAccessException)
             {

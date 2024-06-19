@@ -12,12 +12,15 @@ namespace DEV_Test.Services.ProductService
     {
         private readonly IOptions<ConnectionApi> _connectionApi;
 
+        private readonly HttpClient _httpClient;
+
         private DatabaseContext _db;
 
-        public ProductService(IOptions<ConnectionApi> connectionApi, DatabaseContext db)
+        public ProductService(IOptions<ConnectionApi> connectionApi, DatabaseContext db, HttpClient httpClient)
         {
             _connectionApi = connectionApi;
             _db = db;
+            _httpClient = httpClient;
         }
 
         public async Task<List<ResultModel>> GetAllProducts()
@@ -28,11 +31,10 @@ namespace DEV_Test.Services.ProductService
                 url += "/products";
             }
 
-            HttpClient client = new HttpClient();
             List<ResultModel> request = new List<ResultModel>();
             try
             {
-                var response = await client.GetAsync(url);
+                var response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -92,11 +94,10 @@ namespace DEV_Test.Services.ProductService
                 url += $"/products/{id}";
             }
 
-            HttpClient client = new HttpClient();
             ResultModel request = null;
             try
             {
-                var response = await client.GetAsync(url);
+                var response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -149,11 +150,11 @@ namespace DEV_Test.Services.ProductService
             {
                 url += $"/products/category/{filterRequest.category}?sortBy=price&order={filterRequest.order}";
             }
-            HttpClient client = new HttpClient();
+
             List<ResultModel> request = new List<ResultModel>();
             try
             {
-                var response = await client.GetAsync(url);
+                var response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -245,11 +246,10 @@ namespace DEV_Test.Services.ProductService
                 }
             }
 
-            HttpClient client = new HttpClient();
             List<ResultModel> request = new List<ResultModel>();
             try
             {
-                var response = await client.GetAsync(url);
+                var response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {

@@ -56,6 +56,7 @@ Nakon što je kloniranje završeno, možeš ući u direktorij repozitorija:
 
 ```
 cd King_Akademija_Ulazni_Ispit
+cd DEV_Test
 ```
 
 Za pokretanje aplikacije potrebno je u direktoriju, u terminalu pokrenuti naredbu:
@@ -65,6 +66,38 @@ dotnet run
 ```
 
 ## Autorizacija i autentifikacija
+
+**Autentifikacija** znači verificiranje korisnika koji pokušava pristupiti nekom sustavu ili Web Api-ju. Dakle korisnik šalje svoje vjerodajnice (credentials) putem POST zahtjeva (to uglavnom budu username i password), a za odgovor dobija Access Token. Takva autorizacija događa se u 4 koraka:
+
+* 1.KORAK - Klijent prvo šalje zahtjev (request) serveru sa validnim podacima (username i password)
+
+```js
+var loginRequest = new { loginModel.Username, loginModel.Password };
+```
+
+* 2.KORAK - Server odgovara sa Access Tokenom. Ovaj token sadrži sve podatke da se identificira određeni user i ima rok trajanja
+
+```js
+ var response = await _httpClient.PostAsJsonAsync(url, loginRequest);
+ if (response.IsSuccessStatusCode)
+ {
+     var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+     return loginResponse;
+ }
+ else
+ {
+     throw new UnauthorizedAccessException("Invalid username or password");
+ }
+```
+
+U ovom projektu osim tokena server odgovara sa osnovnim podacima svakog korisnika, u slučaju da je autentifikacija uspješnja.
+
+* 3.KORAK - KLijentksa stran koristi taj token za ulaz u zaštićene zahtjeve sve dok je token valjan umjesto da ponovno traži login od korisnika.
+
+* 4.KORAK - Kada token istekne klijent može zatražiti novi token korištenjem Refresh Tokena.
+
+**Autorizacija** je proces određivanja prava pristupa autentificiranog korisnika određenim resursima ili akcijama u sustavu. Glavni cilj autorizacije je osigurati da korisnik ima odgovarajuća prava za pristupanje određenim podacima ili izvršavanje specifičnih akcija. 
+U ovom projektu nemamo primjenu autorizacije jer ne postoje određene role koje korisnici imaju. Najčešća upotreba je za admina, koji ima veća prava pristupa od ostalih klijenata.
 
 ## Konfiguracija baze podataka
 
@@ -77,9 +110,9 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
   options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 ```
 
-**builder.Services.AddDbContext<DatabaseContext>** - Kada se DatabaseContext traži u aplikaciji (npr. u kontroleru ili servisu), DI kontejner će ga automatski kreirati i pružiti.
-**options.UseSqlServer** - Ovdje se konfigurira DatabaseContext da koristi SQL Server kao bazu podataka.
-**builder.Configuration.GetConnectionString("Default")** - Ova metoda dohvaća connection string za SQL Server iz konfiguracijskih postavki aplikacije.
+* **builder.Services.AddDbContext<DatabaseContext>** - Kada se DatabaseContext traži u aplikaciji (npr. u kontroleru ili servisu), DI kontejner će ga automatski kreirati i pružiti.
+* **options.UseSqlServer** - Ovdje se konfigurira DatabaseContext da koristi SQL Server kao bazu podataka.
+* **builder.Configuration.GetConnectionString("Default")** - Ova metoda dohvaća connection string za SQL Server iz konfiguracijskih postavki aplikacije.
 
 Primjer konfiguracije u appsettings.json:
 

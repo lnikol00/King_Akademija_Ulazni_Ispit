@@ -6,6 +6,7 @@ KING ICT Akademija - Ljetna praksa - Ulazni ispit (.NET)
 * [Kloniranje i pokretanje projekta](#kloniranje-i-pokretanje-projekta)
 * [Autorizacija i autentifikacija](#autorizacija-i-autentifikacija)
 * [Konfiguracija baze podataka](#konfiguracija-baze-podataka)
+* [Servisi](#servisi)
 
 ## Zadatak
 Potrebno je razviti middleware koje će imati mogućnost dohvata proizvoda iz različitih izvora (web
@@ -157,3 +158,50 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 Ova metoda se koristi za kofniguraciju modela entiteta koristeći ModelBuilder. Odnosno omogućuje nam dodatne konfiguracije koje nisu moguće putem atributa.
 U ovoj metodi definira se da kombinacija danih vrijednosti mora biti jedinstvena za svaki unos u tablicu. Odnosno svaki Search iz modela SearchParams mora biti jedinstven, te svaki Order i Category iz FilterParams modela mora biti jedinstven u tablici.
+
+## Servisi
+
+Rad u Auth servisu opisan je u poglavlju Autentifikacija i autorizacija, to je servis koji obavlja Token Based Autentifikaciju, odnosno verificira klijenta i vraća mu njegov Token.
+
+Rad u Produkt servisu obavlja komunikaciju sa vanjskim Api-jem te dohvaćanje podataka sa vanjskog api-ja. Servis se sastoji od 5 metoda. 1 metoda je privatna i ona obavlja komunikaciju sa vanjskim API-jem i dobiva, odgovor od vanjskog API-ja. Ova logika je odvojena u posebnu metodu da se optimizira kod i smanji nepotrebno ponavljanje istih linija koda.
+
+```js
+private async Task<T> GetApiResponse<T>(string url)
+{
+    try
+    {
+        var response = await _httpClient.GetAsync(url);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!string.IsNullOrEmpty(responseContent))
+            {
+                return JsonSerializer.Deserialize<T>(responseContent);
+            }
+            else
+            {
+                throw new ErrorMessage("Invalid response context!");
+            }
+        }
+        else
+        {
+            throw new ErrorMessage("No response!");
+        }
+    }
+    catch (Exception ex)
+    {
+        throw new ErrorMessage($"An error occurred: {ex.Message}");
+    }
+}
+```
+
+Ostale metode obavljaju zadatke koji su navedenu poglavlju zadaci. Te metode pozivaju privatnu metodu i spremaju rezultat privatne metode u lokalnu varijablu. Zatim obavljaju sa tim podacima ono što se od te posebne metode očekiva. 
+
+```js
+var results = await GetApiResponse<SearchResult>(url);
+```
+
+Dakle kreiranjem jedne privatne metode znatno smo optimizirali kod s obzirom da smo ono što smo inače obavljali u 20 linija koda sada sveli u jednu. Također poboljšali smo lovljenje grešaka jer je lakše pratiti gdje u kodu je nastala greška.
+

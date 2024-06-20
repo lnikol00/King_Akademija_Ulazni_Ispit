@@ -23,55 +23,24 @@ namespace DEV_Test.Services.ProductService
             _httpClient = httpClient;
         }
 
-        public async Task<List<ResultModel>> GetAllProducts()
+        private async Task<T> GetApiResponse<T>(string url)
         {
-            string url = _connectionApi.Value.ConnectionString;
-            if (!string.IsNullOrEmpty(url))
-            {
-                url += "/products";
-            }
-
-            List<ResultModel> request = new List<ResultModel>();
             try
             {
                 var response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var reposnseContext = await response.Content.ReadAsStringAsync();
+                    var responseContent = await response.Content.ReadAsStringAsync();
 
-                    if (!string.IsNullOrEmpty(reposnseContext))
+                    if (!string.IsNullOrEmpty(responseContent))
                     {
-                        var results = JsonSerializer.Deserialize<SearchResult>(reposnseContext);
-
-                        if (results != null && results.products.Count > 0)
-                        {
-                            var products = results.products.Select(x => new ResultModel
-                            {
-                                Id = x.id,
-                                Image = x.images[0],
-                                Title = x.title,
-                                Description = x.description,
-                                Price = x.price
-
-                            }).ToList();
-
-                            if (products != null)
-                            {
-                                request.AddRange(products);
-                            }
-                        }
-                        else
-                        {
-                            throw new ErrorMessage("No products to match this parameters");
-                        }
-
+                        return JsonSerializer.Deserialize<T>(responseContent);
                     }
                     else
                     {
                         throw new ErrorMessage("Invalid response context!");
                     }
-
                 }
                 else
                 {
@@ -81,6 +50,39 @@ namespace DEV_Test.Services.ProductService
             catch (Exception ex)
             {
                 throw new ErrorMessage($"An error occurred: {ex.Message}");
+            }
+        }
+
+        public async Task<List<ResultModel>> GetAllProducts()
+        {
+            string url = _connectionApi.Value.ConnectionString;
+            if (!string.IsNullOrEmpty(url))
+            {
+                url += "/products";
+            }
+
+            List<ResultModel> request = new List<ResultModel>();
+            var results = await GetApiResponse<SearchResult>(url);
+
+            if (results != null && results.products.Count > 0)
+            {
+                var products = results.products.Select(x => new ResultModel
+                {
+                    Id = x.id,
+                    Image = x.images[0],
+                    Title = x.title,
+                    Description = x.description,
+                    Price = x.price
+                }).ToList();
+
+                if (products != null)
+                {
+                    request.AddRange(products);
+                }
+            }
+            else
+            {
+                throw new ErrorMessage("No products available!");
             }
 
             return request;
@@ -95,49 +97,22 @@ namespace DEV_Test.Services.ProductService
             }
 
             ResultModel request = null;
-            try
+            var product = await GetApiResponse<Product>(url);
+
+            if (product != null)
             {
-                var response = await _httpClient.GetAsync(url);
-
-                if (response.IsSuccessStatusCode)
+                request = new ResultModel
                 {
-                    var reposnseContext = await response.Content.ReadAsStringAsync();
-
-                    if (!string.IsNullOrEmpty(reposnseContext))
-                    {
-                        var product = JsonSerializer.Deserialize<Product>(reposnseContext);
-
-                        if (product != null)
-                        {
-                            request = new ResultModel
-                            {
-                                Id = product.id,
-                                Image = product.images[0],
-                                Title = product.title,
-                                Description = product.description,
-                                Price = product.price
-                            };
-
-                        }
-                        else
-                        {
-                            throw new ErrorMessage("Product with specified ID doesn't exist!");
-                        }
-
-                    }
-                    else
-                    {
-                        throw new ErrorMessage("Invalid response context!");
-                    }
-                }
-                else
-                {
-                    throw new ErrorMessage("No response!");
-                }
+                    Id = product.id,
+                    Image = product.images[0],
+                    Title = product.title,
+                    Description = product.description,
+                    Price = product.price
+                };
             }
-            catch (Exception ex)
+            else
             {
-                throw new ErrorMessage($"An error occurred: {ex.Message}");
+                throw new ErrorMessage("Product with specified ID doesn't exist!");
             }
 
             return request;
@@ -152,80 +127,52 @@ namespace DEV_Test.Services.ProductService
             }
 
             List<ResultModel> request = new List<ResultModel>();
-            try
+            var results = await GetApiResponse<SearchResult>(url);
+
+            var filterParams = filterRequest.ToModel();
+
+            var existingFilter = await _db.Filters.FirstOrDefaultAsync(x =>
+                    x.Order == filterParams.Order
+                    && x.Category == filterParams.Category
+            );
+
+            if (existingFilter == null)
             {
-                var response = await _httpClient.GetAsync(url);
+                _db.Add(filterParams);
 
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    var reposnseContext = await response.Content.ReadAsStringAsync();
-
-                    if (!string.IsNullOrEmpty(reposnseContext))
-                    {
-                        var results = JsonSerializer.Deserialize<SearchResult>(reposnseContext);
-
-                        var filterParams = filterRequest.ToModel();
-
-                        var existingFilter = await _db.Filters.FirstOrDefaultAsync(x =>
-                                x.Order == filterParams.Order
-                                && x.Category == filterParams.Category
-                        );
-
-                        if (existingFilter == null)
-                        {
-                            _db.Add(filterParams);
-
-                            try
-                            {
-                                await _db.SaveChangesAsync();
-                            }
-                            catch
-                            {
-                                throw new ErrorMessage("An error occurred while connecting to the database.");
-                            }
-                        }
-                        else
-                        {
-                            filterParams = existingFilter;
-                        }
-
-                        if (results != null && results.products.Count > 0)
-                        {
-                            var products = results.products.Select(x => new ResultModel
-                            {
-                                Id = x.id,
-                                Image = x.images[0],
-                                Title = x.title,
-                                Description = x.description,
-                                Price = x.price
-
-                            }).ToList();
-
-                            if (products != null)
-                            {
-                                request.AddRange(products);
-                            }
-                        }
-                        else
-                        {
-                            throw new ErrorMessage("No results to match this parameters");
-                        }
-
-                    }
-                    else
-                    {
-                        throw new ErrorMessage("Invalid response context!");
-                    }
-
+                    await _db.SaveChangesAsync();
                 }
-                else
+                catch
                 {
-                    throw new ErrorMessage("No response!");
+                    throw new ErrorMessage("An error occurred while connecting to the database.");
                 }
             }
-            catch (Exception ex)
+            else
             {
-                throw new ErrorMessage($"An error occurred: {ex.Message}");
+                filterParams = existingFilter;
+            }
+
+            if (results != null && results.products.Count > 0)
+            {
+                var products = results.products.Select(x => new ResultModel
+                {
+                    Id = x.id,
+                    Image = x.images[0],
+                    Title = x.title,
+                    Description = x.description,
+                    Price = x.price
+                }).ToList();
+
+                if (products != null)
+                {
+                    request.AddRange(products);
+                }
+            }
+            else
+            {
+                throw new ErrorMessage("No results to match this parameters");
             }
 
             return request;
@@ -247,79 +194,51 @@ namespace DEV_Test.Services.ProductService
             }
 
             List<ResultModel> request = new List<ResultModel>();
-            try
+            var results = await GetApiResponse<SearchResult>(url);
+
+            var searchParams = searchRequest.ToModel();
+
+            var existingSearch = await _db.Searches.FirstOrDefaultAsync(x =>
+                    x.Search == searchParams.Search
+            );
+
+            if (existingSearch == null)
             {
-                var response = await _httpClient.GetAsync(url);
+                _db.Add(searchParams);
 
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    var reposnseContext = await response.Content.ReadAsStringAsync();
-
-                    if (!string.IsNullOrEmpty(reposnseContext))
-                    {
-                        var results = JsonSerializer.Deserialize<SearchResult>(reposnseContext);
-
-                        var searchParams = searchRequest.ToModel();
-
-                        var existingSearch = await _db.Searches.FirstOrDefaultAsync(x =>
-                                x.Search == searchParams.Search
-                        );
-
-                        if (existingSearch == null)
-                        {
-                            _db.Add(searchParams);
-
-                            try
-                            {
-                                await _db.SaveChangesAsync();
-                            }
-                            catch
-                            {
-                                throw new ErrorMessage("An error occurred while connecting to the database.");
-                            }
-                        }
-                        else
-                        {
-                            searchParams = existingSearch;
-                        }
-
-                        if (results != null && results.products.Count > 0)
-                        {
-                            var products = results.products.Select(x => new ResultModel
-                            {
-                                Id = x.id,
-                                Image = x.images[0],
-                                Title = x.title,
-                                Description = x.description,
-                                Price = x.price
-
-                            }).ToList();
-
-                            if (products != null)
-                            {
-                                request.AddRange(products);
-                            }
-                        }
-                        else
-                        {
-                            throw new ErrorMessage("No products to match this parameters");
-                        }
-
-                    }
-                    else
-                    {
-                        throw new ErrorMessage("Invalid response context!");
-                    }
-
+                    await _db.SaveChangesAsync();
                 }
-                else
+                catch
                 {
-                    throw new ErrorMessage("No response!");
+                    throw new ErrorMessage("An error occurred while connecting to the database.");
                 }
             }
-            catch (Exception ex)
+            else
             {
-                throw new ErrorMessage($"An error occurred: {ex.Message}");
+                searchParams = existingSearch;
+            }
+
+            if (results != null && results.products.Count > 0)
+            {
+                var products = results.products.Select(x => new ResultModel
+                {
+                    Id = x.id,
+                    Image = x.images[0],
+                    Title = x.title,
+                    Description = x.description,
+                    Price = x.price
+                }).ToList();
+
+                if (products != null)
+                {
+                    request.AddRange(products);
+                }
+            }
+            else
+            {
+                throw new ErrorMessage("No products to match this search!");
             }
 
             return request;
